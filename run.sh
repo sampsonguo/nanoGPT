@@ -26,22 +26,43 @@ fi
 # Begin script in case all parameters are correct
 echo "$parameter"
 
-if [ "$parameter" == "prepare" ]; then
-    python data/shakespeare_char/prepare.py
-fi
+predict() 
+{
+   python sample.py --out_dir=out-shakespeare-char \
+        --dtype=float32 
+}
 
-if [ "$parameter" == "train" ]; then
-    python train.py config/train_shakespeare_char.py \
+prepare() 
+{
+   python data/shakespeare_char/prepare.py
+}
+
+train() 
+{
+       python train.py config/train_shakespeare_char.py \
         --dtype=float32 \
         --init_from=gpt2 \
         --compile=False \
         --batch_size=4 \
         --max_iters=30 
+}
+
+if [ "$parameter" == "prepare" ]; then
+   prepare
+fi
+
+if [ "$parameter" == "train" ]; then
+   train
 fi
 
 if [ "$parameter" == "predict" ]; then
-    python sample.py --out_dir=out-shakespeare-char \
-        --dtype=float32 
+   predict
+fi
+
+if [ "$parameter" == "all" ]; then
+   prepare
+   train
+   predict
 fi
 
 if [ "$parameter" == "clean" ]; then 
@@ -51,3 +72,4 @@ if [ "$parameter" == "clean" ]; then
    rm -rf data/shakespeare_char/*.txt
    rm -rf __pycache__
 fi 
+
