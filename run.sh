@@ -3,28 +3,63 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -m parameter"
+   echo "Usage: $0 -m mode -t task"
    echo -e "\t-m train, predict"
+   echo -e "\t-t shake, sms"
    exit 1 # Exit script after printing help
 }
 
-while getopts "m:" opt
+while getopts "m:t:" opt
 do
    case "$opt" in
-      m ) parameter="$OPTARG" ;;
-      ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
+      m ) mode="$OPTARG" ;;
+      t ) task="$OPTARG" ;;
+      ? ) helpFunction ;; # Print helpFunction in case mode is non-existent
    esac
 done
 
-# Print helpFunction in case parameters are empty
-if [ -z "$parameter" ] 
+# Print helpFunction in case modes are empty
+if [ -z "$mode" ] || [ -z "$task" ]
 then
-   echo "Some or all of the parameters are empty";
+   echo "Some or all of the modes are empty";
    helpFunction
 fi
 
-# Begin script in case all parameters are correct
-echo "$parameter"
+# Begin script in case all modes are correct
+echo "$mode"
+echo "$task"
+
+prepare() 
+{
+   if [ "$task" == "shake" ]; then
+      python data/shakespeare_char/prepare.py
+   fi
+
+   if [ "$task" == "sms" ]; then
+      python data/sms_char/prepare.py
+   fi
+}
+
+train() 
+{
+   if [ "$task" == "shake" ]; then
+      python train.py config/train_shakespeare_char.py \
+         --dtype=float32 \
+         --init_from=gpt2 \
+         --compile=False \
+         --batch_size=4 \
+         --max_iters=30 
+   fi
+
+   if [ "$task" == "sms" ]; then
+      python train.py config/train_sms_char.py \
+         --dtype=float32 \
+         --init_from=gpt2 \
+         --compile=False \
+         --batch_size=4 \
+         --max_iters=30 
+   fi
+}
 
 predict() 
 {
@@ -32,40 +67,25 @@ predict()
         --dtype=float32 
 }
 
-prepare() 
-{
-   python data/shakespeare_char/prepare.py
-}
-
-train() 
-{
-       python train.py config/train_shakespeare_char.py \
-        --dtype=float32 \
-        --init_from=gpt2 \
-        --compile=False \
-        --batch_size=4 \
-        --max_iters=30 
-}
-
-if [ "$parameter" == "prepare" ]; then
-   prepare
+if [ "$mode" == "prepare" ]; then
+   prepare "$task"
 fi
 
-if [ "$parameter" == "train" ]; then
-   train
+if [ "$mode" == "train" ]; then
+   train "$task"
 fi
 
-if [ "$parameter" == "predict" ]; then
-   predict
+if [ "$mode" == "predict" ]; then
+   predict "$task"
 fi
 
-if [ "$parameter" == "all" ]; then
-   prepare
-   train
-   predict
+if [ "$mode" == "all" ]; then
+   prepare "$task"
+   train "$task"
+   predict "$task"
 fi
 
-if [ "$parameter" == "clean" ]; then 
+if [ "$mode" == "clean" ]; then 
    rm -rf out-*
    rm -rf data/shakespeare_char/*.bin 
    rm -rf data/shakespeare_char/*.pkl
