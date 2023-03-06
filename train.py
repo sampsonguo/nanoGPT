@@ -176,6 +176,11 @@ elif init_from.startswith('gpt2'):
     # read off the created config params, so we can store them into checkpoint correctly
     for k in ['n_layer', 'n_head', 'n_embd', 'block_size', 'bias', 'vocab_size']:
         model_args[k] = getattr(model.config, k)
+    checkpoint = {
+        'model': model.state_dict(),
+        'model_args': model_args,
+    }
+    torch.save(checkpoint, os.path.join(out_dir, 'origin.pt'))
 # crop down the model block size if desired, using model surgery
 if block_size < model.config.block_size:
     model.crop_block_size(block_size)
@@ -241,6 +246,18 @@ t0 = time.time()
 local_iter_num = 0 # number of iterations in the lifetime of this process
 raw_model = model.module if ddp else model # unwrap DDP container if needed
 running_mfu = -1.0
+
+checkpoint = {
+    'model': raw_model.state_dict(),
+#    'optimizer': optimizer.state_dict(),
+    'model_args': model_args,
+#    'iter_num': iter_num,
+#    'best_val_loss': best_val_loss,
+#    'config': config,
+}
+print(f"saving checkpoint to {out_dir}")
+torch.save(checkpoint, os.path.join(out_dir, 'begin.pt'))
+
 while True:
 
     # determine and set the learning rate for this iteration
@@ -272,7 +289,7 @@ while True:
                     'config': config,
                 }
                 print(f"saving checkpoint to {out_dir}")
-                torch.save(checkpoint, os.path.join(out_dir, 'ckpt.pt'))
+                torch.save(checkpoint, os.path.join(out_dir, 'final.pt'))
     if iter_num == 0 and eval_only:
         break
 
