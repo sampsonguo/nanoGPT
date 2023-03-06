@@ -10,7 +10,7 @@ helpFunction()
    exit 1 # Exit script after printing help
 }
 
-while getopts "m:t:" opt
+while getopts "m:t:e:" opt
 do
    case "$opt" in
       m ) mode="$OPTARG" ;;
@@ -62,6 +62,13 @@ finetune()
          --init_from=gpt2 \
          --compile=False 
    fi
+
+   if [ $"task" == "sms" ]; then
+      python train.py config/finetune_sms.py \
+         --dtype=float16 \
+         --init_from=gpt2 \
+         --compile=False
+   fi
 }
 
 
@@ -110,8 +117,10 @@ predict()
 
    fi
    if [ "$task" == "sms" ]; then
-      python sample.py --out_dir=out-sms-char \
-         --dtype=float32 
+      python sample.py --out_dir=out-sms \
+         --dtype=float32 \
+         --start="腾讯科技】验证码：******，**分钟内" \
+         --model_name='final' 
    fi
 }
 
