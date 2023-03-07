@@ -119,8 +119,8 @@ predict()
    if [ "$task" == "sms" ]; then
       python sample.py --out_dir=out-sms \
          --dtype=float32 \
-         --start="腾讯科技】验证码：******，**分钟内" \
-         --model_name='final' 
+         --start="美利严选】您的订单（<肤研...）已发货" \
+         --model_name='final-succ' 
    fi
 }
 
